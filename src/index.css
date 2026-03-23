@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Claude console palette — exact match */
+  --bg-page:       #FAF9F7;
+  --bg-card:       #FFFFFF;
+  --bg-raised:     #F5F4F0;
+  --bg-hover:      #EFEDE8;
+  --bg-code:       #F5F4F0;
+  --border:        #E8E5DE;
+  --border-strong: #D4D0C8;
+
+  /* Algorithm State Colors */
+  --clr-active:     #D97706;
+  --clr-active-bg:  #FEF3E2;
+  --clr-pointer:    #2563EB;
+  --clr-pointer-bg: #EFF6FF;
+  --clr-found:      #059669;
+  --clr-found-bg:   #ECFDF5;
+  --clr-eliminated: #DC2626;
+  --clr-elim-bg:    #FEF2F2;
+  --clr-visited:    #7C3AED;
+  --clr-visited-bg: #F5F3FF;
+  --clr-queued:     #EA580C;
+  --clr-queued-bg:  #FFF7ED;
+  --clr-default-bg: #F5F4F0;
+  --clr-default-border: #E8E5DE;
+
+  /* Difficulty */
+  --easy:   #059669;
+  --medium: #D97706;
+  --hard:   #DC2626;
+
+  /* Text — warm browns/grays, not pure black */
+  --text-primary:   #2D2B28;
+  --text-secondary: #706D65;
+  --text-muted:     #A8A49C;
+  --text-code:      #2D2B28;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+/* Range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--clr-active);
+  border-radius: 50%;
+  margin-top: -4.5px;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
