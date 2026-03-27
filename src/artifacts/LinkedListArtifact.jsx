@@ -178,6 +178,9 @@ export default function LinkedListArtifact({ step, prevStep, animating, input })
 
   const { dataStructure = {} } = step;
   const { nodes = [], pointerAssignments = {}, reversed = {} } = dataStructure;
+  // Show pointer legend only when the scenario uses named pointers (slow/fast, prev/curr etc.)
+  const showPointerLegend = Object.keys(pointerAssignments).length > 0 &&
+    (input?._scenarioUsesPointerAssignments === true || Object.keys(pointerAssignments).length > 0);
 
   // Build a map from node id to node for ordering
   const nodeMap = {};
@@ -279,7 +282,7 @@ export default function LinkedListArtifact({ step, prevStep, animating, input })
       </div>
 
       {/* Pointer assignments legend */}
-      {Object.keys(pointerAssignments).length > 0 && (
+      {showPointerLegend && (
         <div className="flex items-center justify-center gap-3 flex-wrap">
           {Object.entries(pointerAssignments).map(([name, nodeId]) => {
             const color = POINTER_LABEL_COLORS[name] || 'var(--clr-pointer)';

@@ -71,10 +71,12 @@ export default function SlidingWindowArtifact({ step, prevStep, animating, input
   }
 
   const { dataStructure = {} } = step;
-  const { arrayStates = {}, pointers = [], windowLeft, windowRight, windowMeta } = dataStructure;
+  const { arrayStates = {}, pointers = [], windowLeft, windowRight, windowMeta, stack, stackOperation } = dataStructure;
   const nums = input?.nums || input?.s?.split('') || input?.prices || [];
 
-  const hasWindow = windowLeft !== undefined && windowRight !== undefined;
+  const hasWindow = windowLeft !== undefined && windowRight !== undefined && windowLeft >= 0;
+  // Show deque panel only when the scenario actually uses it (e.g. Sliding Window Maximum optimal)
+  const hasDeque = stack !== undefined && (stack.length > 0 || input?._scenarioUsesStack === true);
 
   // Build pointer map: index -> list of pointer objects for that index
   const buildPointerMap = () => {
@@ -169,6 +171,60 @@ export default function SlidingWindowArtifact({ step, prevStep, animating, input
             <span>{windowMeta}</span>
           </div>
         </motion.div>
+      )}
+
+      {/* Deque panel (e.g. Sliding Window Maximum monotonic deque) */}
+      {hasDeque && (
+        <div className="flex justify-center">
+          <div style={{ minWidth: 160, maxWidth: 340 }}>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-xs font-mono uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Deque</span>
+              {stackOperation && (
+                <motion.span
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+                  style={{
+                    color: stackOperation === 'push' ? 'var(--clr-found)' : stackOperation === 'pop' ? 'var(--clr-eliminated)' : 'var(--clr-active)',
+                    backgroundColor: stackOperation === 'push' ? 'var(--clr-found-bg)' : stackOperation === 'pop' ? 'var(--clr-elim-bg)' : 'var(--clr-active-bg)',
+                  }}
+                >
+                  {stackOperation.toUpperCase()}
+                </motion.span>
+              )}
+              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>size: {stack.length}</span>
+            </div>
+            <div
+              className="flex flex-row items-center gap-1.5 rounded-lg p-3 min-h-[52px]"
+              style={{ backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border)' }}
+            >
+              {stack.length === 0 ? (
+                <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>empty</span>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {stack.map((item, idx) => (
+                    <motion.div
+                      key={`${idx}-${item}`}
+                      layout
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      className="flex items-center justify-center px-2 py-1 rounded-md text-xs font-mono font-bold"
+                      style={{
+                        backgroundColor: idx === stack.length - 1 ? 'var(--clr-pointer-bg)' : 'var(--bg-card)',
+                        border: idx === stack.length - 1 ? '2px solid var(--clr-pointer)' : '1px solid var(--border)',
+                        color: idx === stack.length - 1 ? 'var(--clr-pointer)' : 'var(--text-primary)',
+                      }}
+                    >
+                      {item}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Answer banner */}

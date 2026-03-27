@@ -24,7 +24,8 @@ function getCellState(idx, bsLeft, bsMid, bsRight, arrayStates, isAnswer) {
 
   if (isAnswer && idx === bsMid) return 'found';
   if (idx === bsMid) return 'active';
-  if (bsLeft !== undefined && bsRight !== undefined) {
+  // Use != null to handle both null and undefined (brute force steps may set bsLeft: null)
+  if (bsLeft != null && bsRight != null) {
     if (idx < bsLeft || idx > bsRight) return 'eliminated';
   }
   return 'default';
@@ -32,9 +33,9 @@ function getCellState(idx, bsLeft, bsMid, bsRight, arrayStates, isAnswer) {
 
 function getPointersForIndex(idx, bsLeft, bsMid, bsRight, extraPointers) {
   const ptrs = [];
-  if (idx === bsLeft) ptrs.push({ name: 'lo', color: POINTER_COLORS.lo });
-  if (idx === bsMid) ptrs.push({ name: 'mid', color: POINTER_COLORS.mid });
-  if (idx === bsRight) ptrs.push({ name: 'hi', color: POINTER_COLORS.hi });
+  if (bsLeft != null && idx === bsLeft) ptrs.push({ name: 'lo', color: POINTER_COLORS.lo });
+  if (bsMid != null && idx === bsMid) ptrs.push({ name: 'mid', color: POINTER_COLORS.mid });
+  if (bsRight != null && idx === bsRight) ptrs.push({ name: 'hi', color: POINTER_COLORS.hi });
 
   // Also include any extra pointers from the step data
   if (extraPointers) {
@@ -137,6 +138,8 @@ export default function BinarySearchArtifact({ step, prevStep, animating, input 
   const { dataStructure = {} } = step;
   const { bsLeft, bsMid, bsRight, bsCondition, arrayStates = {}, pointers = [] } = dataStructure;
   const nums = input?.nums || [];
+  // Only show binary-search-specific UI when the scenario actually performs a binary search
+  const hasBsSearch = bsLeft != null || input?._scenarioUsesBsSearch === true;
 
   return (
     <div className="space-y-5">
@@ -165,8 +168,8 @@ export default function BinarySearchArtifact({ step, prevStep, animating, input 
         </div>
       </div>
 
-      {/* Search range indicator */}
-      {bsLeft !== undefined && bsRight !== undefined && !step.isAnswer && (
+      {/* Search range indicator — only when real values are present (not null from brute force) */}
+      {bsLeft != null && bsRight != null && !step.isAnswer && (
         <div className="flex items-center justify-center">
           <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>
             search range: [{bsLeft}..{bsRight}]

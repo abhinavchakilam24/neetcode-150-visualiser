@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar.jsx';
 import Footer from './components/layout/Footer.jsx';
 import Landing from './pages/Landing.jsx';
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
       { index: true,             element: <Landing /> },
       { path: 'problems',        element: <ProblemList /> },
       { path: 'problems/:slug',  element: <ProblemDetail /> },
-      { path: 'topics',          element: <Landing /> },
+      { path: 'topics',          element: <Navigate to="/" replace /> },
       { path: 'topics/:topicId', element: <TopicPage /> },
     ],
   },

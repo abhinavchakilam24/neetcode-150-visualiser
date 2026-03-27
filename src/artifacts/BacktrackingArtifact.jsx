@@ -191,15 +191,7 @@ function CallStackPanel({ callStack = [] }) {
 }
 
 export default function BacktrackingArtifact({ step, prevStep, animating, input }) {
-  if (!step) {
-    return (
-      <div className="flex items-center justify-center h-40 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>
-        Press &#9654; or &rarr; to start
-      </div>
-    );
-  }
-
-  const { dataStructure = {} } = step;
+  const { dataStructure = {} } = step || {};
   const { tree = [], currentPath = [], results = [], callStack: rawCallStack } = dataStructure;
 
   // Auto-derive callStack from currentPath + tree nodes if not explicitly provided
@@ -211,9 +203,7 @@ export default function BacktrackingArtifact({ step, prevStep, animating, input 
       const node = nodeMap[id];
       if (!node) return `frame(${id})`;
       const val = node.value ?? '';
-      // If node value looks like "[] rem=7" or "[2,2] rem=3", format nicely
       if (String(val).includes('rem=')) return `backtrack(${val})`;
-      // For permutation-style "[1,2]" nodes
       if (String(val).startsWith('[')) return `backtrack(path=${val})`;
       return `backtrack(${val})`;
     });
@@ -223,6 +213,14 @@ export default function BacktrackingArtifact({ step, prevStep, animating, input 
     () => layoutTree(tree, currentPath),
     [tree, currentPath]
   );
+
+  if (!step) {
+    return (
+      <div className="flex items-center justify-center h-40 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>
+        Press &#9654; or &rarr; to start
+      </div>
+    );
+  }
 
   const svgWidth = width || 320;
   const svgHeight = height || 120;

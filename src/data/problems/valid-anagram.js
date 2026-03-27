@@ -541,8 +541,22 @@ export const validAnagram = {
             {
               stepId: 0,
               lineNumbers: [2],
-              shortLabel: "Length check: 2 ≠ 3",
-              explanation: "s='ab' has length 2, t='abc' has length 3. Different lengths — an anagram must use every letter exactly once, so different lengths make it impossible. Return false immediately.",
+              shortLabel: "Start: s='ab', t='abc'",
+              explanation: "We have s='ab' (length 2) and t='abc' (length 3). The first thing we check is whether the lengths are equal — anagrams must use every letter exactly once.",
+              variables: { "s.length": 2, "t.length": 3 },
+              dataStructure: {
+                arrayStates: { 0: "default", 1: "default" },
+                pointers: [],
+                hashMap: {},
+              },
+              delta: {},
+              isAnswer: false,
+            },
+            {
+              stepId: 1,
+              lineNumbers: [2],
+              shortLabel: "2 ≠ 3 → return false",
+              explanation: "s.length (2) ≠ t.length (3). Different lengths — an anagram must use every letter exactly once, so different lengths make it impossible. Return false immediately without any further work.",
               variables: { "s.length": 2, "t.length": 3, answer: "false" },
               dataStructure: {
                 arrayStates: { 0: "eliminated", 1: "eliminated" },

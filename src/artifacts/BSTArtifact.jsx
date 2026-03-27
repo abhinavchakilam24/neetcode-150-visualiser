@@ -138,6 +138,14 @@ function CallStackPanel({ callStack = [] }) {
 }
 
 export default function BSTArtifact({ step, prevStep, animating, input }) {
+  const { dataStructure = {} } = step || {};
+  const { treeNodes = {}, callStack = [] } = dataStructure;
+  // Show call stack panel only when the scenario actually uses recursion tracking
+  const showCallStack = callStack.length > 0 &&
+    (input?._scenarioUsesCallStack === true || callStack.length > 0);
+
+  const { positions, width, height } = useMemo(() => computeLayout(treeNodes), [treeNodes]);
+
   if (!step) {
     return (
       <div className="flex items-center justify-center h-40 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>
@@ -145,11 +153,6 @@ export default function BSTArtifact({ step, prevStep, animating, input }) {
       </div>
     );
   }
-
-  const { dataStructure = {} } = step;
-  const { treeNodes = {}, callStack = [] } = dataStructure;
-
-  const { positions, width, height } = useMemo(() => computeLayout(treeNodes), [treeNodes]);
 
   const padding = NODE_RADIUS + 10;
   const svgWidth = width + padding * 2;
@@ -213,7 +216,7 @@ export default function BSTArtifact({ step, prevStep, animating, input }) {
         </div>
 
         {/* Call Stack */}
-        {callStack.length > 0 && (
+        {showCallStack && (
           <div className="flex-shrink-0">
             <CallStackPanel callStack={callStack} />
           </div>

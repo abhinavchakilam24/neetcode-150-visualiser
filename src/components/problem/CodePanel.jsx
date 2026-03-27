@@ -9,8 +9,7 @@ const LIGHT_THEME = {
   },
 };
 
-export default function CodePanel({ code, activeLines = [], language = 'java', annotations = {} }) {
-  if (!code) return null;
+export default function CodePanel({ code, activeLines = [], language = 'java' }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -20,12 +19,14 @@ export default function CodePanel({ code, activeLines = [], language = 'java', a
     }
   }, [activeLines]);
 
+  if (!code) return null;
+
   return (
     <div ref={containerRef} className="overflow-auto h-full" style={{ backgroundColor: 'var(--bg-code)' }}>
       <Highlight theme={LIGHT_THEME} code={code.trim()} language={language}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
-            className={`${className} text-[12px] leading-6 py-2 px-0`}
+            className={`${className} text-[12px] leading-6 py-2 px-0 min-w-max`}
             style={{ ...style, margin: 0, background: 'transparent' }}
           >
             {tokens.map((line, lineIndex) => {

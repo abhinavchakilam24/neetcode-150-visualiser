@@ -6,17 +6,17 @@ const STATE_STYLES = {
   visited:    { bg: 'var(--clr-visited-bg)', border: 'var(--clr-visited)',    text: 'var(--clr-visited)',    shadow: 'none' },
   pointer:    { bg: 'var(--clr-pointer-bg)', border: 'var(--clr-pointer)',    text: 'var(--clr-pointer)',    shadow: 'none' },
   eliminated: { bg: 'var(--clr-elim-bg)',    border: 'var(--clr-eliminated)', text: 'var(--clr-eliminated)', shadow: 'none' },
-  queued:     { bg: 'var(--clr-queued-bg)',   border: 'var(--clr-queued)',     text: 'var(--clr-queued)',     shadow: 'none' },
+  queued:     { bg: 'var(--clr-queued-bg)',  border: 'var(--clr-queued)',     text: 'var(--clr-queued)',     shadow: 'none' },
   default:    { bg: 'var(--clr-default-bg)', border: 'var(--clr-default-border)', text: 'var(--text-primary)', shadow: 'none' },
 };
 
-function ArrayCell({ value, index, state, pointers = [] }) {
+function ArrayCell({ value, index, state, pointers = [], showIndex = true, wide = false }) {
   const s = STATE_STYLES[state] || STATE_STYLES.default;
   const isHighlighted = state === 'active' || state === 'found';
 
   return (
     <div className="flex flex-col items-center">
-      {/* Pointer labels */}
+      {/* Pointer labels — fixed height so cells always align */}
       <div className="h-5 flex items-end justify-center gap-0.5 mb-1">
         <AnimatePresence mode="popLayout">
           {pointers.map(p => (
@@ -38,11 +38,13 @@ function ArrayCell({ value, index, state, pointers = [] }) {
         </AnimatePresence>
       </div>
 
-      {/* Cell */}
+      {/* Cell — wider for string values */}
       <motion.div
         layout
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="w-12 h-12 flex items-center justify-center rounded-lg text-sm font-mono font-bold"
+        className={`flex items-center justify-center rounded-lg font-mono font-bold ${
+          wide ? 'h-10 px-3 text-xs min-w-[44px]' : 'w-11 h-11 text-sm'
+        }`}
         style={{
           backgroundColor: s.bg,
           border: `2px solid ${s.border}`,
@@ -52,16 +54,41 @@ function ArrayCell({ value, index, state, pointers = [] }) {
           transition: 'background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s',
         }}
       >
-        {value}
+        {wide ? `"${value}"` : value}
       </motion.div>
 
       {/* Index */}
-      <span className="text-[10px] font-mono mt-1" style={{ color: 'var(--text-muted)' }}>{index}</span>
+      {showIndex && (
+        <span className="text-[10px] font-mono mt-1" style={{ color: 'var(--text-muted)' }}>{index}</span>
+      )}
     </div>
   );
 }
 
-function HashMapPanel({ hashMap = {} }) {
+/* Renders one labelled row of cells */
+function ArrayRow({ label, items, arrayStates, pointers = [], showPointers = true, wide = false }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-[10px] font-mono mb-2 tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </span>
+      <div className="flex items-end gap-1.5 flex-wrap justify-center" style={{ maxWidth: wide ? '560px' : '400px' }}>
+        {items.map((val, idx) => (
+          <ArrayCell
+            key={idx}
+            value={val}
+            index={idx}
+            state={arrayStates[idx] || 'default'}
+            pointers={showPointers ? pointers.filter(p => p.index === idx) : []}
+            wide={wide}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HashMapPanel({ hashMap = {}, label = 'value → index' }) {
   const entries = Object.entries(hashMap);
 
   return (
@@ -72,7 +99,7 @@ function HashMapPanel({ hashMap = {} }) {
           className="text-[10px] px-1.5 py-0.5 rounded font-mono"
           style={{ color: 'var(--text-muted)', backgroundColor: 'var(--bg-raised)', border: '1px solid var(--border)' }}
         >
-          value → index
+          {label}
         </span>
       </div>
 
@@ -82,7 +109,7 @@ function HashMapPanel({ hashMap = {} }) {
           backgroundColor: 'var(--bg-raised)',
           border: '1px solid var(--border)',
           minHeight: '44px',
-          minWidth: '120px',
+          minWidth: '140px',
         }}
       >
         {entries.length === 0 ? (
@@ -140,48 +167,95 @@ export default function ArrayHashMapArtifact({ step, prevStep, animating, input 
 
   const { dataStructure = {} } = step;
   const { arrayStates = {}, pointers = [], hashMap } = dataStructure;
-  const nums = input?.nums || [];
-  const hasHashMap = hashMap !== undefined;
+  // Only show the HashMap panel when the current step has actual entries,
+  // OR when a parent hint confirms this scenario uses a hashmap (so empty
+  // "Init HashMap" steps still show the panel for approaches that build one).
+  const hasHashMap = hashMap !== undefined &&
+    (Object.keys(hashMap).length > 0 || input?._scenarioUsesHashMap === true);
+
+  // Detect input type: nums array, string array (strs), or individual strings (s/t)
+  const hasNums    = Array.isArray(input?.nums);
+  const hasStrs    = Array.isArray(input?.strs);
+  const hasStringS = typeof input?.s === 'string';
+  const hasStringT = typeof input?.t === 'string';
+
+  const numsItems  = hasNums    ? input.nums   : [];
+  const strsItems  = hasStrs    ? input.strs   : [];
+  const sChars     = hasStringS ? [...input.s] : [];
+  const tChars     = hasStringT ? [...input.t] : [];
+
+  // tArrayStates in dataStructure (optional override for second string)
+  const tArrayStates = dataStructure.tArrayStates || arrayStates;
 
   return (
     <div className="space-y-5">
-      {/*
-        Always side-by-side: overflow-x-auto handles wide content.
-        No flex-wrap between array and hashmap — they never stack vertically.
-      */}
+      {/* ── Main content row: arrays/strings + hashmap side by side ── */}
       <div className="flex justify-center overflow-x-auto">
-        <div className="flex items-start gap-8" style={{ flexShrink: 0 }}>
+        <div className="flex items-center gap-8" style={{ flexShrink: 0 }}>
 
-          {/* Array column */}
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] font-mono mb-3 tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
-              nums[]
-            </span>
-            <div className="flex items-start gap-2 flex-wrap justify-center" style={{ maxWidth: '360px' }}>
-              {nums.map((val, idx) => (
-                <ArrayCell
-                  key={idx}
-                  value={val}
-                  index={idx}
-                  state={arrayStates[idx] || 'default'}
-                  pointers={pointers.filter(p => p.index === idx)}
-                />
-              ))}
-            </div>
+          {/* Arrays / Strings column */}
+          <div className="flex flex-col items-center gap-5">
+            {hasNums && (
+              <ArrayRow
+                label="nums[]"
+                items={numsItems}
+                arrayStates={arrayStates}
+                pointers={pointers}
+                showPointers
+              />
+            )}
+
+            {hasStrs && (
+              <ArrayRow
+                label="strs[]"
+                items={strsItems}
+                arrayStates={arrayStates}
+                pointers={pointers}
+                showPointers
+                wide
+              />
+            )}
+
+            {hasStringS && (
+              <ArrayRow
+                label="s[]"
+                items={sChars}
+                arrayStates={arrayStates}
+                pointers={pointers}
+                showPointers
+              />
+            )}
+
+            {hasStringT && (
+              <ArrayRow
+                label="t[]"
+                items={tChars}
+                arrayStates={tArrayStates}
+                pointers={pointers}
+                showPointers={false}
+              />
+            )}
+
+            {/* Fallback: nothing in input yet */}
+            {!hasNums && !hasStrs && !hasStringS && (
+              <div className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+                Press ▶ to start
+              </div>
+            )}
           </div>
 
-          {/* Subtle vertical divider */}
+          {/* Divider */}
           {hasHashMap && (
-            <div
-              className="w-px"
-              style={{ backgroundColor: 'var(--border)', alignSelf: 'stretch', marginTop: '1.5rem' }}
-            />
+            <div className="w-px self-stretch" style={{ backgroundColor: 'var(--border)' }} />
           )}
 
-          {/* HashMap column — entries wrap inside, capped at 260px */}
+          {/* HashMap column */}
           {hasHashMap && (
-            <div style={{ maxWidth: '260px' }}>
-              <HashMapPanel hashMap={hashMap} />
+            <div style={{ minWidth: '140px', maxWidth: '300px' }}>
+              <HashMapPanel
+                hashMap={hashMap}
+                label={hasStrs ? 'sorted → group' : 'value → index'}
+              />
             </div>
           )}
 

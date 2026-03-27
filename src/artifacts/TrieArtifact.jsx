@@ -10,6 +10,13 @@ const STATE_STYLES = {
   default:    { bg: 'var(--clr-default-bg)', border: 'var(--clr-default-border)', text: 'var(--text-primary)' },
 };
 
+// children can be an array of ids OR an object {char: id}
+function getChildIds(node) {
+  if (!node.children) return [];
+  if (Array.isArray(node.children)) return node.children;
+  return Object.values(node.children);
+}
+
 function layoutTrie(nodes) {
   if (!nodes || nodes.length === 0) return { positioned: [], edges: [] };
 
@@ -17,7 +24,7 @@ function layoutTrie(nodes) {
   nodes.forEach(n => { nodeMap[n.id] = n; });
 
   // Find root (node with no parent)
-  const childIds = new Set(nodes.flatMap(n => n.children || []));
+  const childIds = new Set(nodes.flatMap(n => getChildIds(n)));
   const root = nodes.find(n => !childIds.has(n.id)) || nodes[0];
 
   const positioned = [];
@@ -38,8 +45,8 @@ function layoutTrie(nodes) {
     levelWidths[level]++;
 
     const node = nodeMap[id];
-    if (node?.children) {
-      node.children.forEach(childId => {
+    if (node) {
+      getChildIds(node).forEach(childId => {
         if (!visited.has(childId)) {
           queue.push({ id: childId, level: level + 1 });
         }
@@ -58,7 +65,7 @@ function layoutTrie(nodes) {
     if (!levelCounters[depth]) levelCounters[depth] = 0;
 
     const node = nodeMap[id];
-    const children = node.children || [];
+    const children = getChildIds(node);
 
     // Position children first for centering
     const childPositions = [];
@@ -187,6 +194,14 @@ function TrieEdge({ edge }) {
 }
 
 export default function TrieArtifact({ step, prevStep, animating, input }) {
+  const { dataStructure = {} } = step || {};
+  const { trieNodes = [] } = dataStructure;
+
+  const { positioned, edges, width, height } = useMemo(
+    () => layoutTrie(trieNodes),
+    [trieNodes]
+  );
+
   if (!step) {
     return (
       <div className="flex items-center justify-center h-40 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>
@@ -194,14 +209,6 @@ export default function TrieArtifact({ step, prevStep, animating, input }) {
       </div>
     );
   }
-
-  const { dataStructure = {} } = step;
-  const { trieNodes = [] } = dataStructure;
-
-  const { positioned, edges, width, height } = useMemo(
-    () => layoutTrie(trieNodes),
-    [trieNodes]
-  );
 
   const svgWidth = width || 320;
   const svgHeight = height || 120;

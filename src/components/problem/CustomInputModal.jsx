@@ -52,6 +52,22 @@ function typeHint(type) {
   }
 }
 
+/** Safely parse JSON without prototype pollution */
+function safeJsonParse(str) {
+  const parsed = JSON.parse(str);
+  // Guard against __proto__ and constructor pollution
+  if (parsed !== null && typeof parsed === 'object') {
+    const dangerous = ['__proto__', 'constructor', 'prototype'];
+    const keys = Array.isArray(parsed)
+      ? parsed.flatMap(item => (item && typeof item === 'object' ? Object.keys(item) : []))
+      : Object.keys(parsed);
+    if (keys.some(k => dangerous.includes(k))) {
+      throw new Error('Input contains disallowed keys');
+    }
+  }
+  return parsed;
+}
+
 /** Parse a raw string input back to the correct type */
 function parseValue(raw, type) {
   const trimmed = raw.trim();
@@ -77,9 +93,9 @@ function parseValue(raw, type) {
   }
   if (type === 'string[]') {
     if (!trimmed) return [];
-    // Try JSON first
+    // Try JSON first, fall through to comma-split on parse failure
     if (trimmed.startsWith('[')) {
-      try { return JSON.parse(trimmed); } catch {}
+      try { return safeJsonParse(trimmed); } catch { /* fall through to comma split */ }
     }
     // Fallback: comma-separated, strip quotes
     return trimmed.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
@@ -87,7 +103,7 @@ function parseValue(raw, type) {
   // 2D arrays and complex types: parse as JSON
   if (type === 'number[][]' || type === 'string[][]' || type === 'json') {
     try {
-      return JSON.parse(trimmed);
+      return safeJsonParse(trimmed);
     } catch (e) {
       throw new Error(`Invalid JSON: ${e.message}`);
     }
@@ -95,13 +111,6 @@ function parseValue(raw, type) {
   return trimmed;
 }
 
-/** Convert a camelCase key to a human-friendly label */
-function humanize(key) {
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, c => c.toUpperCase())
-    .replace(/_/g, ' ');
-}
 
 export default function CustomInputModal({ isOpen, onClose, onRun, problem }) {
   const [fields, setFields] = useState({});
@@ -148,8 +157,17 @@ export default function CustomInputModal({ isOpen, onClose, onRun, problem }) {
     }
   };
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
+
+  // Submit on Enter for single-line inputs only (not textarea)
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
       e.preventDefault();
       handleRun();
     }
@@ -173,6 +191,9 @@ export default function CustomInputModal({ isOpen, onClose, onRun, problem }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.15 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Custom Input"
             className="relative rounded-xl p-5 w-full max-w-md shadow-xl"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
           >
@@ -180,7 +201,7 @@ export default function CustomInputModal({ isOpen, onClose, onRun, problem }) {
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                 Custom Input
               </h3>
-              <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded" style={{ color: 'var(--text-muted)' }}>
+              <button onClick={onClose} aria-label="Close" className="w-6 h-6 flex items-center justify-center rounded" style={{ color: 'var(--text-muted)' }}>
                 <X className="w-4 h-4" />
               </button>
             </div>

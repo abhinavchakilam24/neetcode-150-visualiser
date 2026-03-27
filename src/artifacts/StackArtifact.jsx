@@ -159,6 +159,10 @@ export default function StackArtifact({ step, prevStep, animating, input }) {
   const { arrayStates = {}, pointers = [], stack, stackOperation } = dataStructure;
   const nums = input?.nums || input?.s?.split('') || input?.temperatures || [];
   const hasArray = nums.length > 0 && Object.keys(arrayStates).length > 0;
+  // Only show the stack panel when the scenario actually uses the stack (has non-empty stack
+  // in at least one step), or when this step's stack is already non-empty.
+  const hasStack = stack !== undefined &&
+    (stack.length > 0 || input?._scenarioUsesStack === true);
 
   return (
     <div className="space-y-5">
@@ -185,7 +189,7 @@ export default function StackArtifact({ step, prevStep, animating, input }) {
       )}
 
       {/* Stack visualization */}
-      {stack !== undefined && (
+      {hasStack && (
         <div className="flex justify-center">
           <div style={{ minWidth: 160, maxWidth: 280 }}>
             <StackPanel stack={stack} stackOperation={stackOperation} />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { allProblems } from '../../data/index.js';
 
 export default function HeroSection() {
   return (
@@ -9,7 +10,7 @@ export default function HeroSection() {
           Visualiser 150
         </h1>
         <p className="text-sm mb-5 max-w-sm mx-auto" style={{ color: 'var(--text-secondary)' }}>
-          150 problems. Interactive step-by-step dry runs.
+          {allProblems.length} problems. Interactive step-by-step dry runs.
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link

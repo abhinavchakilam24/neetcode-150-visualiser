@@ -23,15 +23,16 @@ export default function ArtifactControls({
     >
       {/* Transport buttons */}
       <div className="flex items-center gap-0.5">
-        <Btn onClick={onReset} disabled={currentStep === 0} title="Jump to start">
+        <Btn onClick={onReset} disabled={currentStep === 0} title="Jump to start" aria-label="Jump to start">
           <SkipBack className="w-3.5 h-3.5" />
         </Btn>
-        <Btn onClick={onPrev} disabled={currentStep === 0} title="Step back">
+        <Btn onClick={onPrev} disabled={currentStep === 0} title="Step back" aria-label="Step back">
           <ChevronLeft className="w-4 h-4" />
         </Btn>
         <button
           onClick={isPlaying ? onPause : onPlay}
           title={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all mx-0.5"
           style={{
             backgroundColor: isPlaying ? 'var(--clr-active-bg)' : 'var(--clr-found-bg)',
@@ -41,10 +42,10 @@ export default function ArtifactControls({
         >
           {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
         </button>
-        <Btn onClick={onNext} disabled={currentStep >= totalSteps - 1} title="Step forward">
+        <Btn onClick={onNext} disabled={currentStep >= totalSteps - 1} title="Step forward" aria-label="Step forward">
           <ChevronRight className="w-4 h-4" />
         </Btn>
-        <Btn onClick={onJumpToEnd} disabled={currentStep >= totalSteps - 1} title="Jump to end">
+        <Btn onClick={onJumpToEnd} disabled={currentStep >= totalSteps - 1} title="Jump to end" aria-label="Jump to end">
           <SkipForward className="w-3.5 h-3.5" />
         </Btn>
       </div>
@@ -56,6 +57,7 @@ export default function ArtifactControls({
         max={Math.max(0, totalSteps - 1)}
         value={currentStep}
         onChange={e => onScrub?.(Number(e.target.value))}
+        aria-label="Step scrubber"
         className="flex-1 min-w-0"
       />
 
@@ -91,12 +93,13 @@ export default function ArtifactControls({
   );
 }
 
-function Btn({ onClick, children, disabled, title }) {
+function Btn({ onClick, children, disabled, title, 'aria-label': ariaLabel }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={ariaLabel}
       className="w-7 h-7 rounded-md flex items-center justify-center transition-colors disabled:opacity-25 hover:bg-[var(--bg-hover)]"
       style={{ color: 'var(--text-secondary)' }}
     >

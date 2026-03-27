@@ -144,13 +144,64 @@ export default function ProblemDetail() {
     return scenario?.steps || [];
   }, [approach, activeScenario, customSteps]);
 
+  // Whether ANY step in the current scenario has a non-empty hashMap.
+  // Passed to artifacts so they can show the panel even during "Init HashMap" (empty) steps.
+  const scenarioUsesHashMap = useMemo(() => {
+    return steps.some(s => {
+      const hm = s.dataStructure?.hashMap;
+      return hm !== undefined && Object.keys(hm).length > 0;
+    });
+  }, [steps]);
+
+  // Whether ANY step in the current scenario has a non-empty stack/deque.
+  const scenarioUsesStack = useMemo(() => {
+    return steps.some(s => {
+      const stk = s.dataStructure?.stack;
+      return Array.isArray(stk) && stk.length > 0;
+    });
+  }, [steps]);
+
+  // Whether ANY step in the current scenario has real binary search pointers (non-null bsLeft).
+  const scenarioUsesBsSearch = useMemo(() => {
+    return steps.some(s => s.dataStructure?.bsLeft != null);
+  }, [steps]);
+
+  // Whether ANY step in the current scenario has named pointer assignments (slow/fast etc.)
+  const scenarioUsesPointerAssignments = useMemo(() => {
+    return steps.some(s => {
+      const pa = s.dataStructure?.pointerAssignments;
+      return pa != null && Object.keys(pa).length > 0;
+    });
+  }, [steps]);
+
+  // Whether ANY step in the current scenario has a non-empty call stack.
+  const scenarioUsesCallStack = useMemo(() => {
+    return steps.some(s => {
+      const cs = s.dataStructure?.callStack;
+      return Array.isArray(cs) && cs.length > 0;
+    });
+  }, [steps]);
+
   const currentInput = useMemo(() => {
-    if (customInput) return customInput;
-    const scenarios = approach?.dryRunScenarios;
-    if (!scenarios) return null;
-    const scenario = scenarios[activeScenario] || Object.values(scenarios)[0];
-    return scenario?.input || null;
-  }, [approach, activeScenario, customInput]);
+    let base;
+    if (customInput) {
+      base = customInput;
+    } else {
+      const scenarios = approach?.dryRunScenarios;
+      if (!scenarios) return null;
+      const scenario = scenarios[activeScenario] || Object.values(scenarios)[0];
+      base = scenario?.input || null;
+    }
+    // Attach hints so artifacts know whether to render panels for optional data structures
+    return base ? {
+      ...base,
+      _scenarioUsesHashMap: scenarioUsesHashMap,
+      _scenarioUsesStack: scenarioUsesStack,
+      _scenarioUsesBsSearch: scenarioUsesBsSearch,
+      _scenarioUsesPointerAssignments: scenarioUsesPointerAssignments,
+      _scenarioUsesCallStack: scenarioUsesCallStack,
+    } : null;
+  }, [approach, activeScenario, customInput, scenarioUsesHashMap, scenarioUsesStack, scenarioUsesBsSearch, scenarioUsesPointerAssignments, scenarioUsesCallStack]);
 
   const player = useStepPlayer(steps);
 
@@ -160,6 +211,7 @@ export default function ProblemDetail() {
     onPlayPause: () => player.isPlaying ? player.pause() : player.play(),
     onReset: player.reset,
     onJumpToEnd: player.jumpToEnd,
+    enabled: !showCustomModal,
   });
 
   const handleScenarioChange = (id) => {
@@ -181,8 +233,8 @@ export default function ProblemDetail() {
       try {
         setCustomSteps(computeFn(input));
         setCustomInput(input);
-      } catch (e) {
-        console.error('computeSteps error:', e);
+      } catch {
+        // computeSteps failed — silently ignore, keep existing steps
       }
     }
   };
@@ -192,7 +244,7 @@ export default function ProblemDetail() {
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Problem not found</h1>
         <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-          <span className="font-mono">{slug}</span> doesn't have a data file yet.
+          <span className="font-mono">{slug}</span>{" doesn't have a data file yet."}
         </p>
         <Link to="/" className="text-sm font-medium" style={{ color: 'var(--clr-active)' }}>← Back to Home</Link>
       </div>
@@ -295,7 +347,7 @@ export default function ProblemDetail() {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(problem.complexity).map(([key, val]) => (
+              {Object.entries(problem.complexity).filter(([, val]) => val != null).map(([key, val]) => (
                 <tr key={key} style={{ borderBottom: '1px solid var(--bg-raised)' }}>
                   <td className="py-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     {problem.approaches[key]?.label || key}
@@ -326,10 +378,10 @@ export default function ProblemDetail() {
 
   const TopBar = (
     <div
-      className="flex items-center justify-between flex-wrap gap-1 px-3 sm:px-4 border-b flex-shrink-0 overflow-x-auto"
-      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)' }}
+      className="flex items-center justify-between gap-1 px-3 sm:px-4 border-b flex-shrink-0 overflow-x-auto"
+      style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', minHeight: '44px' }}
     >
-      <div className="flex items-center gap-0 min-w-0">
+      <div className="flex items-center gap-0 flex-shrink-0">
         {['brute', 'better', 'optimal'].map(key => {
           const a = problem.approaches[key];
           if (!a) return null;

@@ -11,6 +11,7 @@
   --bg-code:       #F5F4F0;
   --border:        #E8E5DE;
   --border-strong: #D4D0C8;
+  --border-bright: #C8C4BC;   /* edge/connector lines in tree/graph artifacts */
 
   /* Algorithm State Colors */
   --clr-active:     #D97706;
@@ -27,6 +28,8 @@
   --clr-queued-bg:  #FFF7ED;
   --clr-default-bg: #F5F4F0;
   --clr-default-border: #E8E5DE;
+  --clr-window:     #2563EB;   /* sliding window highlight */
+  --clr-window-bg:  #EFF6FF;
 
   /* Difficulty */
   --easy:   #059669;
@@ -79,6 +82,21 @@ code, pre, .font-mono {
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 3px;
+}
+
+/* Focus visible — keyboard navigation outline */
+:focus-visible {
+  outline: 2px solid var(--clr-active);
+  outline-offset: 2px;
+}
+
+/* Inputs use focus-visible instead of focus:outline-none */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--clr-active);
+  outline-offset: 0px;
+  border-color: var(--clr-active) !important;
 }
 
 /* Range slider */

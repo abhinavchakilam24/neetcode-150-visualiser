@@ -88,6 +88,11 @@ function TreeNode({ node, state, isSwap }) {
 }
 
 export default function HeapArtifact({ step, prevStep, animating, input }) {
+  const { dataStructure = {} } = step || {};
+  const { heap = [], heapHighlight = [], heapType } = dataStructure;
+
+  const treeNodes = useMemo(() => computeTreeLayout(heap), [heap]);
+
   if (!step) {
     return (
       <div className="flex items-center justify-center h-40 text-sm font-mono" style={{ color: 'var(--text-muted)' }}>
@@ -95,11 +100,6 @@ export default function HeapArtifact({ step, prevStep, animating, input }) {
       </div>
     );
   }
-
-  const { dataStructure = {} } = step;
-  const { heap = [], heapHighlight = [], heapType } = dataStructure;
-
-  const treeNodes = useMemo(() => computeTreeLayout(heap), [heap]);
   const depth = heap.length > 0 ? Math.floor(Math.log2(heap.length)) + 1 : 1;
   const svgWidth = Math.max(320, Math.pow(2, depth - 1) * 60);
   const svgHeight = depth * 64 + 48;

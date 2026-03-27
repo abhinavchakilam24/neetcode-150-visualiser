@@ -316,9 +316,12 @@ export const allProblems = TOPICS.flatMap(topic =>
 export const allTopics = TOPICS;
 
 export function getProblemBySlug(slug) {
-  return PROBLEM_DATA[slug] || null;
+  // Validate slug format to prevent prototype chain access (__proto__, constructor, etc.)
+  if (!slug || typeof slug !== 'string' || !/^[a-z0-9-]+$/.test(slug)) return null;
+  return Object.prototype.hasOwnProperty.call(PROBLEM_DATA, slug) ? PROBLEM_DATA[slug] : null;
 }
 
 export function getTopicById(id) {
+  if (!id || typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id)) return null;
   return TOPICS.find(t => t.id === id) || null;
 }
